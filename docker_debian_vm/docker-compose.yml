@@ -1,0 +1,31 @@
+# This is the container i use to work in a secure development environment
+# More to harden security will be implemented in the near future
+
+services:
+  debian_for_dev_env:
+    container_name: debian_for_dev_env
+    image: debian:12
+    privileged: true
+    ports:
+      - "9011:8080"  # Add the desired port mapping
+    command: >
+      sh -c '
+      echo "installing basic softwares i will use" &&
+      apt update -y &&
+      apt upgrade -y &&
+      apt install sudo -y &&
+      apt install gh -y &&
+      apt install wget -y &&
+
+      echo "installing neovim" &&
+      apt install neovim -y &&
+      wget -P /opt https://github.com/neovim/neovim/releases/download/v0.10.3/nvim-linux64.tar.gz &&
+      tar -xvzf /opt/nvim-linux64.tar.gz -C /opt &&
+      rm /opt/nvim-linux64.tar.gz &&
+      ln -sf /opt/nvim-linux64/bin/nvim /usr/bin/nvim
+
+      echo "keeps the container running" &&
+      sleep infinity
+      '
+    labels:
+      comment: "the container i use to work in a secure development environment"
