@@ -2,30 +2,76 @@
 # More to harden security will be implemented in the near future
 
 services:
-  debian_for_dev_env:
-    container_name: debian_for_dev_env
-    image: debian:12
-    privileged: true
-    ports:
-      - "9011:8080"  # Add the desired port mapping
-    command: >
-      sh -c '
-      echo "installing basic softwares i will use" &&
-      apt update -y &&
-      apt upgrade -y &&
-      apt install sudo -y &&
-      apt install gh -y &&
-      apt install wget -y &&
+  languageexchange_bot:
 
-      echo "installing neovim" &&
-      apt install neovim -y &&
-      wget -P /opt https://github.com/neovim/neovim/releases/download/v0.10.3/nvim-linux64.tar.gz &&
-      tar -xvzf /opt/nvim-linux64.tar.gz -C /opt &&
-      rm /opt/nvim-linux64.tar.gz &&
-      ln -sf /opt/nvim-linux64/bin/nvim /usr/bin/nvim
+    #-- below this its all about container caracteristics
 
-      echo "keeps the container running" &&
-      sleep infinity
-      '
+    container_name: languageexchange_bot
+    image: python:3
+    restart: unless-stopped
     labels:
-      comment: "the container i use to work in a secure development environment"
+      comment: "container where the languageexchangebot will run"
+
+    #adds a volume that the container will use. cant be re-referenced in this files
+    volumes:
+      - ./volume_mounts/python_scripts/:/app:ro
+
+    #-- below this its all about security
+
+    #forbids several kernel capabilities
+    cap_drop:
+      - ALL
+
+    #you can reallow stuff running the above
+    #cap_add:
+    #  - AUDIT_WRITE
+    #  - CHOWN
+    #  - DAC_OVERRIDE
+    #  - FOWNER
+    #  - FSETID
+    #  - KILL
+    #  - MKNOD
+    #  - NET_BIND_SERVICE
+    #  - NET_RAW
+    #  - SETFCAP
+    #  - SETGID
+    #  - SETPCAP
+    #  - SETUID
+    #  - SYS_CHROOT
+
+    #prevent processes inside the container from gaining new privileges
+    security_opt:
+      - no-new-privileges:true
+
+    #mount the container's root filesystem as read-only. all that is not in volume-mounts, cant be changed
+    read_only: true
+
+    #mounts a directory into ram, makes the files non-persistent, usually not necessary. good for examples like general porpuse alpine
+    tmpfs:
+    #  - /tmp
+
+    #prevents log files to grow indefinitely. these are typically located within the docker root directory
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    #sets the container resources usage limitation
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1g
+        reservations:
+          cpus: '0.5'
+          memory: 512m
+
+    networks:
+      - default
+
+
+#will declare the volumes used
+volumes:
+  high_security_example:
+    name: high_security_example
